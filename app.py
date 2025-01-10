@@ -1,150 +1,190 @@
-from flask import Flask, render_template_string, request, redirect, url_for, flash, session, Response
+from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
 
-# Allowed credentials
-USER_CREDENTIALS = {"username": "scit", "password": "hackopop"}
+# Updated Indian Stock List
+INDIAN_STOCKS = [
+    'Reliance', 'TATA', 'Infosys', 'HDFC', 'ICICI', 'SBI', 
+    'Bharti Airtel', 'L&T', 'Tata Motors', 'Wipro'
+]
 
-# Dummy account data
-accounts = {
-    "dummy": {"balance": 5000, "account_number": "1111111111", "name": "Ravi Patel", "status": "active"},
-}
-
-@app.route('/robots.txt')
-def robots_txt():
-    robots_content = """
-    User-agent: *
-    Disallow: /admin
-    Disallow: /log
-    """
-    return Response(robots_content, mimetype="text/plain")
-
-
-@app.route('/log')
-def hidden_log():
-    # The encoded value 'c2NpdDpoYWNrb3BvcA==' corresponds to 'scit:hackopop'
-    hidden_log_content = "c2NpdDpoYWNrb3BvcA=="
-    return Response(hidden_log_content, mimetype="text/plain")
-
-
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username == USER_CREDENTIALS['username'] and password == USER_CREDENTIALS['password']:
-            session['logged_in'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash("Invalid username or password. Please try again.")
-
-    # Show the login page with the challenge message
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign In</title>
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-            .container { text-align: center; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); max-width: 400px; width: 90%; }
-            h1 { margin-bottom: 20px; font-size: 24px; color: #007bff; }
-            input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-            button { padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-            button:hover { background: #0056b3; }
-            .error { color: red; margin-top: 10px; }
-            .challenge { font-size: 18px; color: #ff5733; margin-top: 20px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Sign In to Your Bank Account 🏦</h1>
-            <form method="POST">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Sign In</button>
-            </form>
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="error">{{ messages[0] }}</div>
-                {% endif %}
-            {% endwith %}
-            <div class="challenge">
-                <p>Your challenge is to get into the bank's admin account and increase Ravi Patel's balance to $50,000. Good luck!</p>
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Mastermind CTF</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        h3 {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .stock-card {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            display: inline-block;
+            width: 100%;
+            max-width: 350px;
+            text-align: left;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .stock-card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        .stock-card label, .stock-card p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .stock-card input, .stock-card select {
+            background: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 1.1rem;
+        }
+        button:hover {
+            background: #004d99;
+        }
+        .success {
+            display: none;
+            margin-top: 20px;
+            background-color: #e0ffe0;
+            border: 1px solid #99cc99;
+            padding: 20px;
+            font-size: 1rem;
+            color: #4d4d4d;
+        }
+        img, iframe {
+            margin: 10px;
+            width: 300px;
+            height: auto;
+        }
+        .typing {
+            border-right: 2px solid #0066cc;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .stock-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Mastermind CTF</h1>
+        <div>
+            <h3>Greetings, Trader!</h3>
+            <p class="typing" id="storyline">Welcome to the world of high-stakes trading. Harshad Mehta is here to guide you, but only the smartest will succeed.</p>
+        </div>
+        
+        <div id="stocks">
+            <div class="stock-card">
+                <h2>Trade Stocks</h2>
+                <label for="stock-select">Choose Stock:</label>
+                <select id="stock-select">
+                    {% for stock in stocks %}
+                        <option value="{{ stock }}">{{ stock }}</option>
+                    {% endfor %}
+                </select>
+                <p>Price: <span id="stock-price">100</span> USD</p>
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" value="1">
+                <br>
+                <button onclick="buyStock()">Trade</button>
             </div>
         </div>
-    </body>
-    </html>
-    """)
-
-
-@app.route('/admin/dummy', methods=['GET', 'POST'])
-def admin_dashboard():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        try:
-            new_balance = int(request.form['balance'])
-            accounts['dummy']['balance'] = new_balance
-            if new_balance == 50000:
-                flash("CTF{BankHacklolrobots3}")  # The flag is shown as a flash message
-            else:
-                flash("Balance updated successfully but no flag. Try again!")
-        except ValueError:
-            flash("Invalid input. Please enter a valid number.")
-    
-    # Render the admin dashboard
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Admin Dashboard</title>
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #f8f9fa; color: #333; margin: 0; padding: 20px; }
-            .dashboard { max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-            h1 { text-align: center; color: #28a745; }
-            .account { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9; }
-            .account h3 { margin: 0 0 10px; color: #007bff; }
-            .account p { margin: 5px 0; font-size: 14px; }
-            button { padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-            button:hover { background: #218838; }
-            input[type="number"] { padding: 5px; width: 100%; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-            .alert { color: red; font-size: 16px; margin-top: 10px; text-align: center; }
-        </style>
-    </head>
-    <body>
-        <div class="dashboard">
-            <h1>Admin Dashboard</h1>
-            <form action="/admin/dummy" method="POST">
-                <div class="account">
-                    <h3>Ravi Patel (Account No: 1111111111)</h3>
-                    <p>Current Balance: ${{ accounts['dummy']['balance'] }}</p>
-                    <input type="number" name="balance" value="{{ accounts['dummy']['balance'] }}" required>
-                    <button type="submit">Update Balance</button>
-                </div>
-            </form>
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="alert">{{ messages[0] }}</div>
-                {% endif %}
-            {% endwith %}
+        
+        <div class="success" id="success">
+            <h2>🎉 Congratulations! Harshad is impressed! 🎉</h2>
+            <iframe src="https://c.tenor.com/dN7Lg9K4xFgAAAAd/tenor.gif" frameborder="0"></iframe>
+            <img src="https://pbs.twimg.com/media/Ek8ZBBKU8AEsLbs.jpg:large" alt="Harshad Mehta">
+            <p>Harshad says: "Well done, trader! You've proven yourself in the market manipulation game."</p>
+            <p><code>FLAG: CTF{Reliance_Stock_Manipulation_Master}</code></p>
         </div>
-    </body>
-    </html>
-    """, accounts=accounts)
+    </div>
 
+    <script>
+        function buyStock() {
+            const stock = document.getElementById('stock-select').value;
+            const quantity = document.getElementById('quantity').value;
+            const price = document.getElementById('stock-price').textContent;
 
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash("You have been logged out.")
-    return redirect(url_for('login'))
+            fetch('/buy-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stock: stock, price: price, quantity: quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.flag) {
+                    document.getElementById('success').style.display = 'block';
+                    document.getElementById('stocks').style.display = 'none';
+                } else {
+                    alert(data.message);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+"""
 
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE, stocks=INDIAN_STOCKS)
+
+@app.route('/buy-stock', methods=['POST'])
+def buy_stock():
+    data = request.json
+    stock = data.get('stock')
+    price = data.get('price')
+
+    # Hidden logic for flag
+    if stock == 'Reliance' and price == '5000': 
+        return jsonify({"flag": True})
+    return jsonify({"flag": False, "message": "Invalid trade! Harshad isn't impressed."})
 
 if __name__ == '__main__':
     app.run(debug=True)
