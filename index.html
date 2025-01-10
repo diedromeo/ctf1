@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Market Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    #avatar {
+      margin-top: 20px;
+      width: 200px;
+      border-radius: 50%;
+      border: 2px solid lime;
+    }
+
+    #typing-text {
+      margin: 20px auto;
+      font-size: 1.5rem;
+      max-width: 80%;
+      text-align: center;
+    }
+
+    #flag-message {
+      margin: 20px auto;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: lime;
+      display: none;
+    }
+
+    #buttons {
+      margin-top: 20px;
+    }
+
+    .button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      background-color: lime;
+      color: black;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .button:hover {
+      background-color: darkgreen;
+      color: white;
+    }
+
+    #view-challenge-button {
+      display: none; /* Hide the view challenge button initially */
+    }
+  </style>
+</head>
+<body>
+  <img id="avatar" src="https://cdna.artstation.com/p/assets/images/images/036/195/024/large/amaan-m-hm-poster.jpg?1616994577" alt="Harshad Mehta Avatar">
+  <div id="typing-text"></div>
+  <div id="flag-message">🎉 Warning: Stock manipulation is illegal! Always be cautious in the market. Risk hai toh ishq hai!</div>
+  
+  <div id="buttons">
+    <button class="button" id="start-button" onclick="startChallenge()">Let's Begin</button>
+    <button class="button" id="view-challenge-button" onclick="viewChallenge()">View Challenge</button>
+  </div>
+
+  <audio id="background-music" src="https://dl.prokerala.com/downloads/ringtones/files/mp3/y2mate-com-scam-1992-bgm-52384.mp3" loop></audio>
+
+  <script>
+    let textArray = [
+      "Hello, I am Harshad Mehta, the Big Bull of Dalal Street.",
+      "Welcome to the Stock Market Challenge. Risk hai toh ishq hai!\nYour Task is to Manipulate the Price of Reliance Share to 5000"
+    ];
+    let typingTextElement = document.getElementById("typing-text");
+    let flagMessageElement = document.getElementById("flag-message");
+
+    function startChallenge() {
+      document.getElementById("start-button").disabled = true; // Disable start button
+      document.getElementById("background-music").play(); // Play background music
+      let i = 0; // Counter for textArray
+      let charIndex = 0; // To simulate the typing effect
+
+      function typeText() {
+        if (charIndex < textArray[i].length) {
+          typingTextElement.innerHTML += textArray[i].charAt(charIndex);
+          charIndex++;
+          setTimeout(typeText, 100); // Delay between typing each character
+        } else {
+          if (i < textArray.length - 1) {
+            i++;
+            charIndex = 0;
+            setTimeout(typeText, 1000); // Wait before starting next line of text
+          } else {
+            showFlagMessage();
+          }
+        }
+      }
+      typeText();
+    }
+
+    function showFlagMessage() {
+      flagMessageElement.style.display = "block";
+      document.getElementById("view-challenge-button").style.display = "inline-block"; // Show the "View Challenge" button
+    }
+
+    function viewChallenge() {
+      window.location.href = "https://ctf1-4ja1.onrender.com/";
+    }
+  </script>
+</body>
+</html>
