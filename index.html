@@ -60,6 +60,13 @@
     #view-challenge-button {
       display: none; /* Hide the view challenge button initially */
     }
+
+    .highlight {
+      font-weight: bold;
+      color: #ffcc00; /* Highlight color */
+      font-size: 1.6rem;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -77,7 +84,8 @@
   <script>
     let textArray = [
       "Hello, I am Harshad Mehta, the Big Bull of Dalal Street.",
-      "Welcome to the Stock Market Challenge. Risk hai toh ishq hai!\nYour Task is to Manipulate the Price of Reliance Share to 5000"
+      "Welcome to the Stock Market Challenge. Risk hai toh ishq hai!",
+      "Your Task is to Manipulate the Price of Reliance Share to 5000"
     ];
     let typingTextElement = document.getElementById("typing-text");
     let flagMessageElement = document.getElementById("flag-message");
@@ -97,6 +105,7 @@
           if (i < textArray.length - 1) {
             i++;
             charIndex = 0;
+            typingTextElement.innerHTML += "<br>"; // Add a line break after each dialogue
             setTimeout(typeText, 1000); // Wait before starting next line of text
           } else {
             showFlagMessage();
