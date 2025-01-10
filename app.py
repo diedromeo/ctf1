@@ -132,7 +132,7 @@ HTML_TEMPLATE = """
             <iframe src="https://c.tenor.com/dN7Lg9K4xFgAAAAd/tenor.gif" frameborder="0"></iframe>
             <img src="https://pbs.twimg.com/media/Ek8ZBBKU8AEsLbs.jpg:large" alt="Harshad Mehta">
             <p>Harshad says: "Well done, trader! You've proven yourself in the market manipulation game."</p>
-            <p><code>FLAG: CTF{Reliance_Stock_Manipulation_Master}</code></p>
+            <p><code>FLAG: SCIT{Reliance_Stock_Manipulation_Master}</code></p>
         </div>
     </div>
 
@@ -173,7 +173,7 @@ def buy_stock():
     price = data.get('price')
 
     # Hidden logic for flag
-    if stock == 'Reliance' and price == '500':
+    if stock == 'Reliance' and price == '5000':
         return jsonify({"flag": True})
     return jsonify({"flag": False, "message": "Invalid trade! Harshad isn't impressed."})
 
