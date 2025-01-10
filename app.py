@@ -2,6 +2,12 @@ from flask import Flask, render_template_string, request, jsonify
 
 app = Flask(__name__)
 
+# Updated Indian Stock List
+INDIAN_STOCKS = [
+    'Reliance', 'TATA', 'Infosys', 'HDFC', 'ICICI', 'SBI', 
+    'Bharti Airtel', 'L&T', 'Tata Motors', 'Wipro'
+]
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -11,128 +17,131 @@ HTML_TEMPLATE = """
     <title>Stock Mastermind CTF</title>
     <style>
         body {
-            background-color: #f4f4f9;
+            background-color: #f0f0f0;
             color: #333;
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #2c3e50;
-            color: #fff;
-            padding: 15px;
             text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
+            padding: 30px;
         }
-
         .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
         }
-
-        .card {
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        h1 {
+            font-size: 2rem;
+            color: #333;
             margin-bottom: 20px;
         }
-
-        .card h2 {
-            margin-top: 0;
-            color: #2c3e50;
+        h3 {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 20px;
         }
-
-        .form-group {
+        .stock-card {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            display: inline-block;
+            width: 100%;
+            max-width: 350px;
+            text-align: left;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .stock-card h2 {
+            font-size: 1.2rem;
             margin-bottom: 15px;
         }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+        .stock-card label, .stock-card p {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: #555;
         }
-
-        select, input {
-            width: 100%;
-            padding: 10px;
+        .stock-card input, .stock-card select {
+            background: #fff;
+            color: #333;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 15px;
             font-size: 1rem;
+            border-radius: 5px;
         }
-
         button {
-            display: inline-block;
             padding: 10px 20px;
-            font-size: 1rem;
-            background-color: #27ae60;
-            color: #fff;
+            background: #0066cc;
+            color: white;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 1.1rem;
         }
-
         button:hover {
-            background-color: #219150;
+            background: #004d99;
         }
-
         .success {
             display: none;
-            text-align: center;
-            background: #ecf0f1;
-            border: 2px solid #27ae60;
-            padding: 20px;
-            border-radius: 8px;
             margin-top: 20px;
+            background-color: #e0ffe0;
+            border: 1px solid #99cc99;
+            padding: 20px;
+            font-size: 1rem;
+            color: #4d4d4d;
         }
-
-        .success h2 {
-            color: #27ae60;
-        }
-
-        iframe, img {
-            margin: 10px 0;
-            max-width: 100%;
+        img, iframe {
+            margin: 10px;
+            width: 300px;
             height: auto;
-            border-radius: 8px;
+        }
+        .typing {
+            border-right: 2px solid #0066cc;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .stock-card {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <header>Stock Mastermind CTF</header>
-
     <div class="container">
-        <div class="card">
-            <h2>Trade Stocks</h2>
-            <div class="form-group">
+        <h1>Stock Mastermind CTF</h1>
+        <div>
+            <h3>Greetings, Trader!</h3>
+            <p class="typing" id="storyline">Welcome to the world of high-stakes trading. Harshad Mehta is here to guide you, but only the smartest will succeed.</p>
+        </div>
+        
+        <div id="stocks">
+            <div class="stock-card">
+                <h2>Trade Stocks</h2>
                 <label for="stock-select">Choose Stock:</label>
                 <select id="stock-select">
-                    <option value="HACK">HACK</option>
-                    <option value="Reliance">Reliance</option>
-                    <option value="TATA">TATA</option>
+                    {% for stock in stocks %}
+                        <option value="{{ stock }}">{{ stock }}</option>
+                    {% endfor %}
                 </select>
-            </div>
-
-            <div class="form-group">
+                <p>Price: <span id="stock-price">100</span> USD</p>
                 <label for="quantity">Quantity:</label>
                 <input type="number" id="quantity" value="1">
+                <br>
+                <button onclick="buyStock()">Trade</button>
             </div>
-
-            <p>Price: <strong><span id="stock-price">100</span> USD</strong></p>
-            <button onclick="buyStock()">Trade</button>
         </div>
-
+        
         <div class="success" id="success">
             <h2>🎉 Congratulations! Harshad is impressed! 🎉</h2>
             <iframe src="https://c.tenor.com/dN7Lg9K4xFgAAAAd/tenor.gif" frameborder="0"></iframe>
             <img src="https://pbs.twimg.com/media/Ek8ZBBKU8AEsLbs.jpg:large" alt="Harshad Mehta">
             <p>Harshad says: "Well done, trader! You've proven yourself in the market manipulation game."</p>
-            <p><code>FLAG: SCIT{Reliance_Stock_Manipulation_Master}</code></p>
+            <p><code>FLAG: CTF{Reliance_Stock_Manipulation_Master}</code></p>
         </div>
     </div>
 
@@ -164,7 +173,7 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def index():
-    return render_template_string(HTML_TEMPLATE)
+    return render_template_string(HTML_TEMPLATE, stocks=INDIAN_STOCKS)
 
 @app.route('/buy-stock', methods=['POST'])
 def buy_stock():
@@ -173,7 +182,7 @@ def buy_stock():
     price = data.get('price')
 
     # Hidden logic for flag
-    if stock == 'Reliance' and price == '5000':
+    if stock == 'Reliance' and price == '5000': 
         return jsonify({"flag": True})
     return jsonify({"flag": False, "message": "Invalid trade! Harshad isn't impressed."})
 
